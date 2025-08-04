@@ -42,9 +42,6 @@ async function bootstrap() {
       if (!config.jwt.secret) {
         throw new Error('JWT_SECRET is required in production');
       }
-      if (!config.firebase.isConfigured) {
-        throw new Error('Firebase configuration is required in production');
-      }
     }
 
     await app.listen(config.port, '0.0.0.0');

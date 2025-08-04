@@ -14,7 +14,7 @@ interface FirebaseServiceAccount {
   universe_domain?: string;
 }
 
-const createServiceAccountFromEnv = (): FirebaseServiceAccount => {
+const createServiceAccountFromEnv = (): FirebaseServiceAccount | null => {
   // Validate required environment variables
   const requiredVars = [
     'FIREBASE_TYPE',
@@ -29,9 +29,10 @@ const createServiceAccountFromEnv = (): FirebaseServiceAccount => {
   const missingVars = requiredVars.filter((varName) => !process.env[varName]);
 
   if (missingVars.length > 0) {
-    throw new Error(
-      `Missing required Firebase environment variables: ${missingVars.join(', ')}`,
+    console.log(
+      `⚠️  Missing Firebase environment variables: ${missingVars.join(', ')}`,
     );
+    return null;
   }
 
   // Handle private key format
@@ -66,6 +67,11 @@ export const initializeFirebase = () => {
     try {
       const serviceAccount = createServiceAccountFromEnv();
 
+      if (!serviceAccount) {
+        console.log('⚠️  Firebase not configured, skipping initialization');
+        return admin;
+      }
+
       admin.initializeApp({
         credential: admin.credential.cert(
           serviceAccount as admin.ServiceAccount,
@@ -78,7 +84,10 @@ export const initializeFirebase = () => {
       );
     } catch (error) {
       console.error('❌ Failed to initialize Firebase:', error);
-      throw error;
+      console.log(
+        '⚠️  Continuing without Firebase (some features may not work)',
+      );
+      // Don't throw error, just log it
     }
   }
   return admin;

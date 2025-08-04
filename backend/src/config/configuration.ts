@@ -3,12 +3,7 @@ export default () => {
 
   // Validate required environment variables in production
   if (isProduction) {
-    const requiredVars = [
-      'JWT_SECRET',
-      'FIREBASE_PROJECT_ID',
-      'FIREBASE_PRIVATE_KEY',
-      'FIREBASE_CLIENT_EMAIL',
-    ];
+    const requiredVars = ['JWT_SECRET'];
 
     const missingVars = requiredVars.filter((varName) => !process.env[varName]);
 
