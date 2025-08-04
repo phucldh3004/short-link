@@ -289,6 +289,8 @@ BASE_URL=http://localhost:3001
 
 ```bash
 # Development
+# Tạo file .env cho development (nếu chưa có)
+# File .env sẽ được tự động load trong development mode
 npm run start:dev
 
 # Production

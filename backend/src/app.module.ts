@@ -17,6 +17,7 @@ import configuration from './config/configuration';
     ConfigModule.forRoot({
       isGlobal: true,
       load: [configuration],
+      envFilePath: process.env.NODE_ENV === 'production' ? undefined : '.env',
     }),
     ThrottlerModule.forRoot([
       {
