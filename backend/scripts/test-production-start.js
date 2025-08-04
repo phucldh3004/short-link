@@ -9,7 +9,7 @@ console.log('================================');
 const productionEnv = {
   ...process.env,
   NODE_ENV: 'production',
-  PORT: '3001',
+  PORT: process.env.PORT || '3001',
   JWT_SECRET: 'test-jwt-secret-for-production-test',
   JWT_EXPIRES_IN: '7d',
   BCRYPT_SALT_ROUNDS: '10',
@@ -53,9 +53,13 @@ app.on('exit', (code) => {
 // Wait 15 seconds then test health endpoint
 setTimeout(() => {
   console.log('\n🏥 Testing health endpoint...');
-  const curl = spawn('curl', ['-f', 'http://localhost:3001/health'], {
-    stdio: 'inherit',
-  });
+  const curl = spawn(
+    'curl',
+    ['-f', `http://localhost:${productionEnv.PORT}/health`],
+    {
+      stdio: 'inherit',
+    },
+  );
 
   curl.on('exit', (code) => {
     if (code === 0) {
