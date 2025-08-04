@@ -11,6 +11,8 @@
     "test:env": "node scripts/test-env.js",
     "test:railway": "node scripts/test-railway-env.js",
     "test:firebase": "node scripts/test-firebase-env.js",
+    "test:firebase-connection": "node scripts/test-firebase-connection.js",
+    "test:production": "node scripts/test-production-start.js",
     "build:test": "node scripts/build-and-test.js",
     "validate:railway": "node scripts/validate-railway-env.js",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
