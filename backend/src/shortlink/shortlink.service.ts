@@ -3,7 +3,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import { nanoid } from 'nanoid';
+import { nanoid } from 'nanoid/non-secure';
 import { ConfigService } from '@nestjs/config';
 import { Shortlink } from './shortlink.entity';
 import { CreateShortlinkDto } from './dto/create-shortlink.dto';
