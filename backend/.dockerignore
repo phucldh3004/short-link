@@ -55,9 +55,18 @@ pids
 .eslintcache
 
 # Firebase
+firebase.json
 firebase-debug.log
 firebase-debug.*.log
 
 # Test scripts
 test-*.js
 create-env.js 
+
+frontend/
+.git
+firebase.json
+node_modules
+dist
+.env
+*.log
