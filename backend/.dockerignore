@@ -55,7 +55,7 @@ pids
 .eslintcache
 
 # Firebase
-firebase.json
+# firebase.json
 firebase-debug.log
 firebase-debug.*.log
 
@@ -65,7 +65,7 @@ create-env.js
 
 frontend/
 .git
-firebase.json
+# firebase.json
 node_modules
 dist
 .env
