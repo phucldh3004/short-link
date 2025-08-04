@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { ShortlinkSchedule } from './schedule.interface';
 import { CreateScheduleDto } from './dto/create-schedule.dto';
@@ -13,6 +15,7 @@ import { ShortlinkService } from '../shortlink/shortlink.service';
 export class SchedulesService {
   constructor(
     private firebaseService: FirebaseService,
+    @Inject(forwardRef(() => ShortlinkService))
     private shortlinkService: ShortlinkService,
   ) {}
 

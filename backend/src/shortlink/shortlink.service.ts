@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { nanoid } from 'nanoid';
 import { ConfigService } from '@nestjs/config';
@@ -16,6 +18,7 @@ export class ShortlinkService {
   constructor(
     private firebaseService: FirebaseService,
     private configService: ConfigService,
+    @Inject(forwardRef(() => SchedulesService))
     private schedulesService: SchedulesService,
   ) {}
 

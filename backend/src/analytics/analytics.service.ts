@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { AccessLog } from './access-log.interface';
 import { FirebaseService } from '../common/services/firebase.service';
 import { ShortlinkService } from '../shortlink/shortlink.service';
@@ -9,6 +9,7 @@ import * as UAParser from 'user-agents';
 export class AnalyticsService {
   constructor(
     private firebaseService: FirebaseService,
+    @Inject(forwardRef(() => ShortlinkService))
     private shortlinkService: ShortlinkService,
   ) {}
 

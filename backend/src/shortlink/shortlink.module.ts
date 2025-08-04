@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ShortlinkController } from './shortlink.controller';
 import { ShortlinkService } from './shortlink.service';
@@ -7,7 +7,12 @@ import { SchedulesModule } from '../schedules/schedules.module';
 import { AnalyticsModule } from '../analytics/analytics.module';
 
 @Module({
-  imports: [CommonModule, ConfigModule, SchedulesModule, AnalyticsModule],
+  imports: [
+    CommonModule,
+    ConfigModule,
+    forwardRef(() => SchedulesModule),
+    AnalyticsModule,
+  ],
   controllers: [ShortlinkController],
   providers: [ShortlinkService],
   exports: [ShortlinkService],
