@@ -26,7 +26,7 @@ COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 
 # Firebase config (nếu cần thiết thực sự)
 # Nếu không có file firebase.json, Railway sẽ fail ở bước này
-# COPY --from=builder --chown=nestjs:nodejs /app/firebase.json ./
+COPY --from=builder --chown=nestjs:nodejs /app/firebase.json ./
 
 USER nestjs
 
