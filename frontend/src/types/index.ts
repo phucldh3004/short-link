@@ -30,7 +30,11 @@ export interface TimeSchedule {
   targetUrl: string
   startTime: Date
   endTime: Date
+  isPasswordProtected: boolean
+  password?: string
   isActive: boolean
+  createdAt: Date
+  updatedAt: Date
 }
 
 export interface Analytics {
@@ -80,6 +84,26 @@ export interface UpdateShortlinkData {
   isActive?: boolean
 }
 
+export interface CreateTimeScheduleData {
+  shortlinkId: string
+  targetUrl: string
+  startTime: string
+  endTime: string
+  isPasswordProtected?: boolean
+  password?: string
+  isActive?: boolean
+}
+
+export interface UpdateTimeScheduleData {
+  id: string
+  targetUrl: string
+  startTime: string
+  endTime: string
+  isPasswordProtected?: boolean
+  password?: string
+  isActive?: boolean
+}
+
 export interface AnalyticsData {
   totalClicks: number
   uniqueVisitors: number
@@ -88,4 +112,17 @@ export interface AnalyticsData {
   browsers: Array<{ browser: string; count: number }>
   countries: Array<{ country: string; count: number }>
   clicksByDate: Array<{ date: string; clicks: number }>
+  clicksByHour: Array<{ hour: string; clicks: number }>
+  topShortlinks: Array<{ shortlinkId: string; count: number }>
+  recentActivity: Array<{
+    id: string
+    shortlinkId: string
+    shortCode: string
+    title?: string
+    ipAddress: string
+    deviceType: string
+    browser: string
+    accessedAt: Date
+  }>
 }
+

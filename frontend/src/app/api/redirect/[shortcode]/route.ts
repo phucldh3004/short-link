@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
+import { rateLimits } from "@/lib/rateLimit"
 
 const prisma = new PrismaClient()
 
 export async function POST(request: NextRequest, { params }: { params: { shortcode: string } }) {
   try {
+    // Apply rate limiting
+    const rateLimitResult = rateLimits.redirect(request)
+    if (rateLimitResult) {
+      return rateLimitResult
+    }
+
     const { shortcode } = params
     const { password } = await request.json()
 
@@ -18,6 +25,9 @@ export async function POST(request: NextRequest, { params }: { params: { shortco
             isActive: true,
             startTime: { lte: new Date() },
             endTime: { gte: new Date() }
+          },
+          orderBy: {
+            startTime: "asc"
           }
         }
       }
@@ -36,23 +46,48 @@ export async function POST(request: NextRequest, { params }: { params: { shortco
       return NextResponse.json({ error: "Shortlink has expired" }, { status: 400 })
     }
 
-    // Kiểm tra mật khẩu
-    if (shortlink.isPasswordProtected) {
-      if (!password) {
-        return NextResponse.json({ error: "Password required", requiresPassword: true }, { status: 401 })
-      }
-
-      const isPasswordValid = await bcrypt.compare(password, shortlink.password!)
-      if (!isPasswordValid) {
-        return NextResponse.json({ error: "Invalid password" }, { status: 401 })
-      }
-    }
-
-    // Xác định target URL (có thể thay đổi theo lịch)
+    // Xác định target URL và kiểm tra mật khẩu
     let targetUrl = shortlink.targetUrl
+
     if (shortlink.timeSchedules.length > 0) {
       const activeSchedule = shortlink.timeSchedules[0]
       targetUrl = activeSchedule.targetUrl
+
+      // Kiểm tra mật khẩu của shortlink
+      if (shortlink.isPasswordProtected) {
+        if (!password) {
+          return NextResponse.json({ error: "Password required", requiresPassword: true }, { status: 401 })
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, shortlink.password!)
+        if (!isPasswordValid) {
+          return NextResponse.json({ error: "Invalid password" }, { status: 401 })
+        }
+      }
+
+      // Kiểm tra mật khẩu của timeschedule
+      if (activeSchedule.isPasswordProtected) {
+        if (!password) {
+          return NextResponse.json({ error: "Schedule password required", requiresPassword: true }, { status: 401 })
+        }
+
+        const isSchedulePasswordValid = await bcrypt.compare(password, activeSchedule.password!)
+        if (!isSchedulePasswordValid) {
+          return NextResponse.json({ error: "Invalid schedule password" }, { status: 401 })
+        }
+      }
+    } else {
+      // Không có timeschedule, kiểm tra mật khẩu của shortlink
+      if (shortlink.isPasswordProtected) {
+        if (!password) {
+          return NextResponse.json({ error: "Password required", requiresPassword: true }, { status: 401 })
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, shortlink.password!)
+        if (!isPasswordValid) {
+          return NextResponse.json({ error: "Invalid password" }, { status: 401 })
+        }
+      }
     }
 
     // Lưu analytics
@@ -101,3 +136,4 @@ export async function POST(request: NextRequest, { params }: { params: { shortco
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
+

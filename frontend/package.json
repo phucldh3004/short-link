@@ -1,39 +1,42 @@
 {
-  "name": "frontend",
+  "name": "shortlink-app",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack -p 3000",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "next start -p 3000",
+    "lint": "next lint",
+    "postinstall": "prisma generate",
+    "deploy": "bash scripts/deploy.sh",
+    "vercel-build": "prisma generate && prisma db push && next build"
   },
   "dependencies": {
-    "@prisma/client": "^6.13.0",
+    "@prisma/client": "^5.7.1",
     "@types/bcryptjs": "^2.4.6",
-    "@types/jsonwebtoken": "^9.0.10",
-    "axios": "^1.11.0",
-    "bcryptjs": "^3.0.2",
-    "date-fns": "^4.1.0",
-    "jsonwebtoken": "^9.0.2",
-    "nanoid": "^5.1.5",
-    "next": "15.4.5",
-    "next-auth": "^4.24.11",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "react-hook-form": "^7.62.0",
-    "recharts": "^3.1.0"
+    "@types/node": "^20",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.0.1",
+    "bcryptjs": "^2.4.3",
+    "eslint": "^8",
+    "eslint-config-next": "14.0.4",
+    "lru-cache": "^10.1.0",
+    "nanoid": "^5.0.4",
+    "next": "14.0.4",
+    "next-auth": "^4.24.5",
+    "postcss": "^8",
+    "prisma": "^5.7.1",
+    "qrcode": "^1.5.3",
+    "react": "^18",
+    "react-dom": "^18",
+    "recharts": "^2.8.0",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "15.4.5",
-    "prisma": "^6.13.0",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "@types/bcryptjs": "^2.4.6"
   }
 }
+

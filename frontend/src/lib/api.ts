@@ -13,7 +13,7 @@ import {
   ShortlinkListItem
 } from "./types"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -40,61 +40,114 @@ export const authApi = {
   }
 }
 
-// Shortlink API
+// Shortlink API - Fixed endpoints to match backend
 export const shortlinkApi = {
   createShortlink: async (data: CreateShortlinkDto): Promise<ApiResponse<ShortlinkResponseDto>> => {
-    const response = await api.post("/shortlink", data)
+    const response = await api.post("/shortlinks", data)
     return response.data
   },
 
   getAllShortlinks: async (): Promise<ApiResponse<ShortlinkListItem[]>> => {
-    const response = await api.get("/shortlink")
+    const response = await api.get("/shortlinks")
     return response.data
   },
 
   getShortlinkById: async (id: string): Promise<ApiResponse<ShortlinkListItem>> => {
-    const response = await api.get(`/shortlink/${id}`)
+    const response = await api.get(`/shortlinks/${id}`)
     return response.data
   },
 
   updateShortlink: async (id: string, data: UpdateShortlinkDto): Promise<ApiResponse<ShortlinkListItem>> => {
-    const response = await api.patch(`/shortlink/${id}`, data)
+    const response = await api.put(`/shortlinks/${id}`, data)
     return response.data
   },
 
   deleteShortlink: async (id: string): Promise<ApiResponse<void>> => {
-    const response = await api.delete(`/shortlink/${id}`)
+    const response = await api.delete(`/shortlinks/${id}`)
     return response.data
   },
 
   redirectToOriginal: async (code: string): Promise<ApiResponse<{ targetUrl: string }>> => {
-    const response = await api.get(`/shortlink/redirect/${code}`)
+    const response = await api.get(`/shortlinks/redirect/${code}`)
     return response.data
   }
 }
 
-// Analytics API
+// Analytics API - Fixed endpoints
 export const analyticsApi = {
   getShortlinkAnalytics: async (shortlinkId: string): Promise<ApiResponse<AnalyticsData>> => {
-    const response = await api.get(`/analytics/shortlink/${shortlinkId}`)
+    const response = await api.get(`/shortlinks/${shortlinkId}/analytics/overview`)
     return response.data
   },
 
-  getUserAnalytics: async (): Promise<ApiResponse<AnalyticsData>> => {
-    const response = await api.get("/analytics/user")
+  getDeviceStats: async (shortlinkId: string): Promise<ApiResponse<any>> => {
+    const response = await api.get(`/shortlinks/${shortlinkId}/analytics/devices`)
+    return response.data
+  },
+
+  getCountryStats: async (shortlinkId: string): Promise<ApiResponse<any>> => {
+    const response = await api.get(`/shortlinks/${shortlinkId}/analytics/countries`)
+    return response.data
+  },
+
+  getTimeStats: async (shortlinkId: string, days: number = 30): Promise<ApiResponse<any>> => {
+    const response = await api.get(`/shortlinks/${shortlinkId}/analytics/timeline?days=${days}`)
     return response.data
   }
 }
 
-// Password Protection API
+// Password Protection API - Fixed endpoints
 export const passwordApi = {
-  setPassword: async (shortlinkId: string, password: string): Promise<ApiResponse<void>> => {
-    const response = await api.post(`/passwords/${shortlinkId}`, { password })
+  setPassword: async (
+    shortlinkId: string,
+    password: string,
+    startTime?: string,
+    endTime?: string
+  ): Promise<ApiResponse<void>> => {
+    const response = await api.post(`/passwords`, {
+      shortlinkId,
+      password,
+      startTime,
+      endTime
+    })
     return response.data
   },
 
   verifyPassword: async (shortlinkId: string, password: string): Promise<ApiResponse<{ isValid: boolean }>> => {
-    const response = await api.post(`/passwords/${shortlinkId}/verify`, { password })
+    const response = await api.post(`/passwords/verify`, { shortlinkId, password })
+    return response.data
+  },
+
+  getPasswords: async (shortlinkId: string): Promise<ApiResponse<any[]>> => {
+    const response = await api.get(`/passwords/${shortlinkId}`)
+    return response.data
+  },
+
+  deletePassword: async (passwordId: string, shortlinkId: string): Promise<ApiResponse<void>> => {
+    const response = await api.delete(`/passwords/${passwordId}?shortlinkId=${shortlinkId}`)
+    return response.data
+  }
+}
+
+// Schedule API
+export const scheduleApi = {
+  createSchedule: async (shortlinkId: string, data: any): Promise<ApiResponse<any>> => {
+    const response = await api.post(`/schedules`, { shortlinkId, ...data })
+    return response.data
+  },
+
+  getSchedules: async (shortlinkId: string): Promise<ApiResponse<any[]>> => {
+    const response = await api.get(`/schedules/${shortlinkId}`)
+    return response.data
+  },
+
+  updateSchedule: async (scheduleId: string, data: any): Promise<ApiResponse<any>> => {
+    const response = await api.put(`/schedules/${scheduleId}`, data)
+    return response.data
+  },
+
+  deleteSchedule: async (scheduleId: string): Promise<ApiResponse<void>> => {
+    const response = await api.delete(`/schedules/${scheduleId}`)
     return response.data
   }
 }
@@ -114,7 +167,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("accessToken")
-      window.location.href = "/login"
+      window.location.href = "/auth/login"
     }
     return Promise.reject(error)
   }

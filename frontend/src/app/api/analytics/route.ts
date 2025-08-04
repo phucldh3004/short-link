@@ -13,13 +13,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { searchParams } = new URL(request.url)
+    const shortlinkId = searchParams.get("shortlinkId")
+    const period = searchParams.get("period") || "30d" // 7d, 30d, 90d, 1y
+
     // Lấy tất cả shortlinks của user
     const shortlinks = await prisma.shortlink.findMany({
       where: { userId: session.user.id },
       select: { id: true }
     })
 
-    const shortlinkIds = shortlinks.map((s: any) => s.id)
+    const shortlinkIds = shortlinks.map((s: { id: string }) => s.id)
 
     if (shortlinkIds.length === 0) {
       return NextResponse.json({
@@ -29,20 +33,55 @@ export async function GET(request: NextRequest) {
         deviceTypes: [],
         browsers: [],
         countries: [],
-        clicksByDate: []
+        clicksByDate: [],
+        clicksByHour: [],
+        topShortlinks: [],
+        recentActivity: []
       })
     }
 
+    // Tính toán thời gian dựa trên period
+    const now = new Date()
+    const startDate = (() => {
+      const date = new Date()
+      switch (period) {
+        case "7d":
+          date.setDate(now.getDate() - 7)
+          break
+        case "30d":
+          date.setDate(now.getDate() - 30)
+          break
+        case "90d":
+          date.setDate(now.getDate() - 90)
+          break
+        case "1y":
+          date.setFullYear(now.getFullYear() - 1)
+          break
+        default:
+          date.setDate(now.getDate() - 30)
+      }
+      return date
+    })()
+
+    // Filter shortlinkId nếu có
+    const analyticsFilter = shortlinkId ? { shortlinkId } : { shortlinkId: { in: shortlinkIds } }
+
     // Tổng lượt click
     const totalClicks = await prisma.analytics.count({
-      where: { shortlinkId: { in: shortlinkIds } }
+      where: {
+        ...analyticsFilter,
+        accessedAt: { gte: startDate }
+      }
     })
 
     // Unique visitors (unique IPs)
     const uniqueVisitors = await prisma.analytics
       .groupBy({
         by: ["ipAddress"],
-        where: { shortlinkId: { in: shortlinkIds } },
+        where: {
+          ...analyticsFilter,
+          accessedAt: { gte: startDate }
+        },
         _count: { ipAddress: true }
       })
       .then((result) => result.length)
@@ -51,7 +90,8 @@ export async function GET(request: NextRequest) {
     const topReferrers = await prisma.analytics.groupBy({
       by: ["referer"],
       where: {
-        shortlinkId: { in: shortlinkIds },
+        ...analyticsFilter,
+        accessedAt: { gte: startDate },
         referer: { not: null }
       },
       _count: { referer: true },
@@ -62,7 +102,10 @@ export async function GET(request: NextRequest) {
     // Device types
     const deviceTypes = await prisma.analytics.groupBy({
       by: ["deviceType"],
-      where: { shortlinkId: { in: shortlinkIds } },
+      where: {
+        ...analyticsFilter,
+        accessedAt: { gte: startDate }
+      },
       _count: { deviceType: true },
       orderBy: { _count: { deviceType: "desc" } }
     })
@@ -70,7 +113,10 @@ export async function GET(request: NextRequest) {
     // Browsers
     const browsers = await prisma.analytics.groupBy({
       by: ["browser"],
-      where: { shortlinkId: { in: shortlinkIds } },
+      where: {
+        ...analyticsFilter,
+        accessedAt: { gte: startDate }
+      },
       _count: { browser: true },
       orderBy: { _count: { browser: "desc" } },
       take: 10
@@ -80,7 +126,8 @@ export async function GET(request: NextRequest) {
     const countries = await prisma.analytics.groupBy({
       by: ["country"],
       where: {
-        shortlinkId: { in: shortlinkIds },
+        ...analyticsFilter,
+        accessedAt: { gte: startDate },
         country: { not: null }
       },
       _count: { country: true },
@@ -88,18 +135,61 @@ export async function GET(request: NextRequest) {
       take: 10
     })
 
-    // Clicks by date (last 30 days)
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-
+    // Clicks by date
     const clicksByDate = await prisma.analytics.groupBy({
       by: ["accessedAt"],
       where: {
-        shortlinkId: { in: shortlinkIds },
-        accessedAt: { gte: thirtyDaysAgo }
+        ...analyticsFilter,
+        accessedAt: { gte: startDate }
       },
       _count: { accessedAt: true },
       orderBy: { accessedAt: "asc" }
+    })
+
+    // Clicks by hour (last 24 hours)
+    const last24Hours = new Date()
+    last24Hours.setHours(now.getHours() - 24)
+
+    const clicksByHour = await prisma.analytics.groupBy({
+      by: ["accessedAt"],
+      where: {
+        ...analyticsFilter,
+        accessedAt: { gte: last24Hours }
+      },
+      _count: { accessedAt: true },
+      orderBy: { accessedAt: "asc" }
+    })
+
+    // Top shortlinks
+    const topShortlinks = await prisma.analytics.groupBy({
+      by: ["shortlinkId"],
+      where: {
+        ...analyticsFilter,
+        accessedAt: { gte: startDate }
+      },
+      _count: { shortlinkId: true },
+      orderBy: { _count: { shortlinkId: "desc" } },
+      take: 10
+    })
+
+    // Recent activity (last 10 clicks)
+    const recentActivity = await prisma.analytics.findMany({
+      where: {
+        ...analyticsFilter,
+        accessedAt: { gte: startDate }
+      },
+      include: {
+        shortlink: {
+          select: {
+            shortCode: true,
+            title: true
+          }
+        }
+      },
+      orderBy: {
+        accessedAt: "desc"
+      },
+      take: 10
     })
 
     return NextResponse.json({
@@ -124,6 +214,24 @@ export async function GET(request: NextRequest) {
       clicksByDate: clicksByDate.map((c) => ({
         date: c.accessedAt.toISOString().split("T")[0],
         clicks: c._count.accessedAt
+      })),
+      clicksByHour: clicksByHour.map((c) => ({
+        hour: c.accessedAt.toISOString().slice(0, 13) + ":00:00",
+        clicks: c._count.accessedAt
+      })),
+      topShortlinks: topShortlinks.map((s) => ({
+        shortlinkId: s.shortlinkId,
+        count: s._count.shortlinkId
+      })),
+      recentActivity: recentActivity.map((a) => ({
+        id: a.id,
+        shortlinkId: a.shortlinkId,
+        shortCode: a.shortlink.shortCode,
+        title: a.shortlink.title,
+        ipAddress: a.ipAddress,
+        deviceType: a.deviceType,
+        browser: a.browser,
+        accessedAt: a.accessedAt
       }))
     })
   } catch (error) {

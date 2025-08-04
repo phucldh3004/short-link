@@ -5,11 +5,13 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import ShortlinkManager from "./ShortlinkManager"
 import Analytics from "../analytics/Analytics"
+import BulkImportExport from "./BulkImportExport"
+import { Shortlink } from "@/types"
 
 export default function Dashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<"shortlinks" | "analytics">("shortlinks")
+  const [activeTab, setActiveTab] = useState<"shortlinks" | "analytics" | "import">("shortlinks")
   const [stats, setStats] = useState({
     totalShortlinks: 0,
     activeShortlinks: 0,
@@ -24,7 +26,7 @@ export default function Dashboard() {
   }, [status, router])
 
   useEffect(() => {
-    if (session) {
+    if (session?.user) {
       fetchStats()
     }
   }, [session])
@@ -34,12 +36,11 @@ export default function Dashboard() {
       const response = await fetch("/api/shortlinks")
       if (response.ok) {
         const shortlinks = await response.json()
-        const activeCount = shortlinks.filter((s: { isActive: boolean }) => s.isActive).length
         setStats({
           totalShortlinks: shortlinks.length,
-          activeShortlinks: activeCount,
-          totalClicks: 0, // Sẽ được tính từ analytics
-          todayClicks: 0 // Sẽ được tính từ analytics
+          activeShortlinks: shortlinks.filter((s: Shortlink) => s.isActive).length,
+          totalClicks: 0, // TODO: Calculate from analytics
+          todayClicks: 0 // TODO: Calculate from analytics
         })
       }
     } catch (error) {
@@ -47,12 +48,32 @@ export default function Dashboard() {
     }
   }
 
+  const handleImport = async (shortlinks: Partial<Shortlink>[]) => {
+    try {
+      const promises = shortlinks.map((shortlink) =>
+        fetch("/api/shortlinks", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(shortlink)
+        })
+      )
+
+      await Promise.all(promises)
+      fetchStats() // Refresh stats after import
+    } catch (error) {
+      console.error("Error importing shortlinks:", error)
+      throw error
+    }
+  }
+
+  const handleExport = () => {
+    // This will be handled by the BulkImportExport component
+  }
+
   if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl">Đang tải...</div>
-      </div>
-    )
+    return <div className="text-center py-8">Đang tải...</div>
   }
 
   if (!session) {
@@ -61,163 +82,67 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Shortlink Dashboard</h1>
-              <p className="text-gray-600">Xin chào, {session.user?.name}</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => router.push("/api/auth/signout")}
-                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
-              >
-                Đăng xuất
-              </button>
-            </div>
+      <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="mt-2 text-gray-600">Chào mừng, {session.user?.name || session.user?.email}!</p>
+        </div>
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-medium text-gray-900">Tổng Shortlinks</h3>
+            <p className="text-3xl font-bold text-indigo-600">{stats.totalShortlinks}</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-medium text-gray-900">Đang hoạt động</h3>
+            <p className="text-3xl font-bold text-green-600">{stats.activeShortlinks}</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-medium text-gray-900">Tổng lượt click</h3>
+            <p className="text-3xl font-bold text-blue-600">{stats.totalClicks}</p>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h3 className="text-lg font-medium text-gray-900">Hôm nay</h3>
+            <p className="text-3xl font-bold text-purple-600">{stats.todayClicks}</p>
           </div>
         </div>
-      </header>
 
-      {/* Stats Overview */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Tổng Shortlinks</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.totalShortlinks}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Đang hoạt động</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.activeShortlinks}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-indigo-500 rounded-md flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Tổng lượt click</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.totalClicks}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="p-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <div className="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Hôm nay</dt>
-                    <dd className="text-lg font-medium text-gray-900">{stats.todayClicks}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="border-b border-gray-200">
+        {/* Tabs */}
+        <div className="border-b border-gray-200 mb-6">
           <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab("shortlinks")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "shortlinks"
-                  ? "border-indigo-500 text-indigo-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Quản lý Shortlink
-            </button>
-            <button
-              onClick={() => setActiveTab("analytics")}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "analytics"
-                  ? "border-indigo-500 text-indigo-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Thống kê
-            </button>
+            {[
+              { id: "shortlinks", name: "Shortlinks" },
+              { id: "analytics", name: "Thống kê" },
+              { id: "import", name: "Import/Export" }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === tab.id
+                    ? "border-indigo-500 text-indigo-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                {tab.name}
+              </button>
+            ))}
           </nav>
         </div>
-      </div>
 
-      {/* Content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {activeTab === "shortlinks" ? <ShortlinkManager /> : <Analytics />}
-      </main>
+        {/* Tab Content */}
+        {activeTab === "shortlinks" && <ShortlinkManager />}
+        {activeTab === "analytics" && <Analytics />}
+        {activeTab === "import" && (
+          <BulkImportExport
+            onImport={handleImport}
+            onExport={handleExport}
+            shortlinks={[]} // This will be populated by the component
+          />
+        )}
+      </div>
     </div>
   )
 }
