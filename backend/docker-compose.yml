@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # Development service
+  backend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: shortlink-backend-dev
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    env_file:
+      - .env
+    command: npm run start:dev
+    restart: unless-stopped
+    networks:
+      - shortlink-network
+
+  # Production service
+  backend-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: shortlink-backend-prod
+    ports:
+      - '3001:3000'
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    restart: unless-stopped
+    networks:
+      - shortlink-network
+
+networks:
+  shortlink-network:
+    driver: bridge
