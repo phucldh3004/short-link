@@ -23,7 +23,7 @@ docker-compose build
 ### 2. Chạy với Docker
 
 ```bash
-# Development mode (port 3000)
+# Development mode (port 3001)
 ./docker/run.sh dev
 
 # Production mode (port 3001)
@@ -69,14 +69,14 @@ backend/
 
 #### Development Service (`backend-dev`)
 
-- **Port**: 3000:3000
+- **Port**: 3001:3001
 - **Volumes**: Source code mounted for hot reload
 - **Command**: `npm run start:dev`
 - **Environment**: Development mode
 
 #### Production Service (`backend-prod`)
 
-- **Port**: 3001:3000
+- **Port**: 3001:3001
 - **Optimized**: Production build
 - **Command**: `node dist/main.js`
 - **Environment**: Production mode
@@ -108,11 +108,11 @@ docker-compose build --no-cache
 
 ### Port Conflicts
 
-Nếu port 3000 hoặc 3001 đã được sử dụng:
+Nếu port 3001 đã được sử dụng:
 
 ```bash
 # Check what's using the port
-lsof -i :3000
+lsof -i :3001
 lsof -i :3001
 
 # Kill process if needed
@@ -148,7 +148,6 @@ docker-compose exec backend-dev sh
 
 ```bash
 # Check if application is responding
-curl http://localhost:3000/health
 curl http://localhost:3001/health
 ```
 
@@ -187,9 +186,15 @@ Tạo file `.env.production`:
 
 ```env
 NODE_ENV=production
-JWT_SECRET=your-production-secret-key
-PORT=3000
-# ... other production variables
+PORT=3001
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+JWT_EXPIRES_IN=7d
+BCRYPT_SALT_ROUNDS=10
+SHORTLINK_CODE_LENGTH=6
+THROTTLER_TTL=60
+THROTTLER_LIMIT=100
+DATABASE_PATH=shortlink.db
+ALLOWED_ORIGINS=*
 ```
 
 ## 📝 Useful Commands
@@ -224,7 +229,7 @@ node test-docker.js
 
 ```bash
 # Test health endpoint
-curl http://localhost:3000/health
+curl http://localhost:3001/health
 
 # Test API endpoints
 node test-api.js

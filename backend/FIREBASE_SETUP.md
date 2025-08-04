@@ -31,8 +31,8 @@ THROTTLER_TTL=60
 THROTTLER_LIMIT=100
 
 # Server Configuration
-PORT=3000
-BASE_URL=http://localhost:3000
+PORT=3001
+BASE_URL=http://localhost:3001
 ```
 
 ## 3. Cấu hình Service Account
@@ -96,7 +96,7 @@ npm run start:dev
 ### Đăng ký
 
 ```bash
-curl -X POST http://localhost:3000/auth/register \
+curl -X POST http://localhost:3001/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -108,7 +108,7 @@ curl -X POST http://localhost:3000/auth/register \
 ### Đăng nhập
 
 ```bash
-curl -X POST http://localhost:3000/auth/login \
+curl -X POST http://localhost:3001/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -119,7 +119,7 @@ curl -X POST http://localhost:3000/auth/login \
 ### Tạo shortlink
 
 ```bash
-curl -X POST http://localhost:3000/shortlinks \
+curl -X POST http://localhost:3001/shortlinks \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{

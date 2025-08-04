@@ -36,7 +36,7 @@ console.log(`FIREBASE_UNIVERSE_DOMAIN=${firebaseConfig.universe_domain}`);
 
 console.log('\n=== Application Configuration ===');
 console.log('NODE_ENV=production');
-console.log('PORT=3000');
+console.log('PORT=3001');
 console.log('JWT_SECRET=your-super-secret-jwt-key-change-this-in-production');
 console.log('JWT_EXPIRES_IN=7d');
 console.log('BCRYPT_SALT_ROUNDS=10');

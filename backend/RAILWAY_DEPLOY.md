@@ -27,9 +27,9 @@ FIREBASE_UNIVERSE_DOMAIN=googleapis.com
 ### 2. App Configuration (Recommended)
 
 ```
-PORT=3000
+PORT=3001
 NODE_ENV=production
-ALLOWED_ORIGINS=http://localhost:3000,https://your-frontend-domain.com
+ALLOWED_ORIGINS=http://localhost:3001,https://your-frontend-domain.com
 ```
 
 ### 3. Security Configuration (Recommended)

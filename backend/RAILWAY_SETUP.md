@@ -59,7 +59,7 @@ FIREBASE_UNIVERSE_DOMAIN=googleapis.com
 
 ```
 NODE_ENV=production
-PORT=3000
+PORT=3001
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 JWT_EXPIRES_IN=7d
 BCRYPT_SALT_ROUNDS=10

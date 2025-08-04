@@ -1,42 +1,63 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import configuration from './config/configuration';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  try {
+    const app = await NestFactory.create(AppModule);
+    const config = configuration();
 
-  // Enable CORS for development and production
-  app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3001',
-    ],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  });
+    // Enable CORS
+    app.enableCors({
+      origin: config.cors.origins,
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    });
 
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
 
-  // Get port from environment
-  const port = process.env.PORT || 3001;
+    console.log('🚀 Application starting...');
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📍 Port: ${config.port}`);
+    console.log(`🔗 CORS Origins: ${config.cors.origins.join(', ')}`);
+    console.log(
+      `🔥 Firebase Project: ${config.firebase.projectId || 'NOT SET'}`,
+    );
+    console.log(`🔐 JWT Secret: ${config.jwt.secret ? 'SET' : 'NOT SET'}`);
+    console.log(`💾 Database: ${config.database.database}`);
+    console.log(
+      `🔄 Database Sync: ${config.database.synchronize ? 'ENABLED' : 'DISABLED'}`,
+    );
 
-  console.log(`🚀 Application starting on port ${port}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(
-    `🔗 CORS Origins: ${process.env.ALLOWED_ORIGINS || 'http://localhost:3000,http://localhost:3001'}`,
-  );
+    // Validate critical configuration in production
+    if (process.env.NODE_ENV === 'production') {
+      if (!config.jwt.secret) {
+        throw new Error('JWT_SECRET is required in production');
+      }
+      if (!config.firebase.isConfigured) {
+        throw new Error('Firebase configuration is required in production');
+      }
+    }
 
-  await app.listen(port, '0.0.0.0');
+    await app.listen(config.port, '0.0.0.0');
 
-  console.log(`✅ Application is running on: http://localhost:${port}`);
+    console.log(
+      `✅ Application is running on: http://localhost:${config.port}`,
+    );
+    console.log(
+      `🏥 Health check available at: http://localhost:${config.port}/health`,
+    );
+  } catch (error) {
+    console.error('❌ Failed to start application:', error);
+    process.exit(1);
+  }
 }
 bootstrap();

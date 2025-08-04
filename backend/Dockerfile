@@ -24,14 +24,14 @@ RUN npm ci --only=production && npm cache clean --force
 # Sao chép file build ra
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 
-# Firebase config - sử dụng Railway Environment Variables
-# Không cần copy firebase.json vì sẽ sử dụng environment variables
+# Firebase config - tạo firebase.json từ environment variables
+RUN echo '{"type":"service_account","project_id":"'$FIREBASE_PROJECT_ID'","private_key_id":"'$FIREBASE_PRIVATE_KEY_ID'","private_key":"'$FIREBASE_PRIVATE_KEY'","client_email":"'$FIREBASE_CLIENT_EMAIL'","client_id":"'$FIREBASE_CLIENT_ID'","auth_uri":"'$FIREBASE_AUTH_URI'","token_uri":"'$FIREBASE_TOKEN_URI'","auth_provider_x509_cert_url":"'$FIREBASE_AUTH_PROVIDER_X509_CERT_URL'","client_x509_cert_url":"'$FIREBASE_CLIENT_X509_CERT_URL'","universe_domain":"'$FIREBASE_UNIVERSE_DOMAIN'"}' > firebase.json
 
 USER nestjs
 
-EXPOSE 3000
+EXPOSE 3001
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/health || exit 1
+  CMD curl -f http://localhost:3001/health || exit 1
 
 CMD ["node", "dist/main.js"]

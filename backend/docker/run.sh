@@ -11,7 +11,7 @@ NC='\033[0m' # No Color
 show_usage() {
     echo -e "${YELLOW}Usage: $0 [dev|prod]${NC}"
     echo -e "${BLUE}Options:${NC}"
-    echo -e "  dev   - Run development environment (port 3000)"
+    echo -e "  dev   - Run development environment (port 3001)"
     echo -e "  prod  - Run production environment (port 3001)"
     echo -e ""
     echo -e "${BLUE}Examples:${NC}"
@@ -45,7 +45,7 @@ fi
 case $ENVIRONMENT in
     "dev")
         echo -e "${YELLOW}🚀 Starting development environment...${NC}"
-        echo -e "${BLUE}📍 Server will be available at: http://localhost:3000${NC}"
+        echo -e "${BLUE}📍 Server will be available at: http://localhost:3001${NC}"
         echo -e "${BLUE}📝 Hot reload enabled${NC}"
         docker-compose up backend-dev
         ;;

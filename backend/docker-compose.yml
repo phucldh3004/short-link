@@ -9,7 +9,7 @@ services:
       target: builder
     container_name: shortlink-backend-dev
     ports:
-      - '3000:3000'
+      - '3001:3001'
     volumes:
       - .:/app
       - /app/node_modules
@@ -30,7 +30,7 @@ services:
       target: production
     container_name: shortlink-backend-prod
     ports:
-      - '3001:3000'
+      - '3001:3001'
     environment:
       - NODE_ENV=production
     env_file:

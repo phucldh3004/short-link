@@ -8,6 +8,9 @@
   "scripts": {
     "build": "nest build",
     "start:prod": "node dist/main.js",
+    "test:env": "node scripts/test-env.js",
+    "test:railway": "node scripts/test-railway-env.js",
+    "validate:railway": "node scripts/validate-railway-env.js",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",

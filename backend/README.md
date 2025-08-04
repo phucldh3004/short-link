@@ -99,6 +99,132 @@ Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
 
 # Shortlink Backend API
 
+## 🚂 Railway Deployment
+
+### Quick Deploy to Railway
+
+1. **Install Railway CLI**
+
+```bash
+npm install -g @railway/cli
+```
+
+2. **Login to Railway**
+
+```bash
+railway login
+```
+
+3. **Initialize Railway Project**
+
+```bash
+railway init
+```
+
+4. **Setup Environment Variables**
+
+```bash
+# Generate Firebase config from firebase.json
+node scripts/railway-setup.js
+
+# Validate Railway environment
+npm run validate:railway
+```
+
+5. **Add Environment Variables to Railway Dashboard**
+
+**Required Variables:**
+
+```
+NODE_ENV=production
+PORT=3001
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+JWT_EXPIRES_IN=7d
+BCRYPT_SALT_ROUNDS=10
+SHORTLINK_CODE_LENGTH=6
+THROTTLER_TTL=60
+THROTTLER_LIMIT=100
+DATABASE_PATH=shortlink.db
+ALLOWED_ORIGINS=https://your-frontend-domain.com
+```
+
+**Firebase Configuration:**
+
+```
+FIREBASE_TYPE=service_account
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_PRIVATE_KEY_ID=your-private-key-id
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+FIREBASE_CLIENT_EMAIL=your-service-account@project.iam.gserviceaccount.com
+FIREBASE_CLIENT_ID=your-client-id
+FIREBASE_CLIENT_X509_CERT_URL=https://www.googleapis.com/robot/v1/metadata/x509/your-service-account%40project.iam.gserviceaccount.com
+```
+
+6. **Deploy**
+
+```bash
+railway up
+```
+
+7. **Monitor Deployment**
+
+```bash
+railway logs
+railway status
+```
+
+### Railway Environment Validation
+
+Before deploying, validate your Railway environment:
+
+```bash
+npm run validate:railway
+```
+
+This will check:
+
+- ✅ All required environment variables
+- ✅ Firebase configuration
+- ✅ JWT secret security
+- ✅ Production readiness
+
+### Railway Commands
+
+```bash
+# Deploy to Railway
+railway up
+
+# View logs
+railway logs
+
+# Check status
+railway status
+
+# Open Railway dashboard
+railway open
+
+# Set environment variables
+railway variables set NODE_ENV=production
+```
+
+### Troubleshooting
+
+**Common Issues:**
+
+- Missing Firebase configuration
+- Invalid JWT secret
+- Database sync issues
+- CORS configuration
+
+**Solutions:**
+
+1. Run `npm run validate:railway` to check configuration
+2. Ensure all required variables are set in Railway dashboard
+3. Check logs with `railway logs`
+4. Verify Firebase service account permissions
+
+---
+
 Backend API cho ứng dụng quản lý shortlink với Firebase làm database.
 
 ## Tính năng
@@ -153,8 +279,8 @@ THROTTLER_TTL=60
 THROTTLER_LIMIT=100
 
 # Server Configuration
-PORT=3000
-BASE_URL=http://localhost:3000
+PORT=3001
+BASE_URL=http://localhost:3001
 ```
 
 ### 5. Chạy ứng dụng
@@ -190,7 +316,7 @@ docker-compose build
 **Chạy với Docker:**
 
 ```bash
-# Development mode (port 3000)
+# Development mode (port 3001)
 ./docker/run.sh dev
 
 # Production mode (port 3001)
@@ -325,7 +451,7 @@ railway logs
 ### Đăng ký
 
 ```bash
-curl -X POST http://localhost:3000/auth/register \
+curl -X POST http://localhost:3001/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -337,7 +463,7 @@ curl -X POST http://localhost:3000/auth/register \
 ### Đăng nhập
 
 ```bash
-curl -X POST http://localhost:3000/auth/login \
+curl -X POST http://localhost:3001/auth/login \
   -H "Content-Type: application/json" \
   -d '{
     "email": "test@example.com",
@@ -348,7 +474,7 @@ curl -X POST http://localhost:3000/auth/login \
 ### Tạo shortlink
 
 ```bash
-curl -X POST http://localhost:3000/shortlinks \
+curl -X POST http://localhost:3001/shortlinks \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{
