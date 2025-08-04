@@ -48,6 +48,8 @@ export async function POST(request: NextRequest, { params }: { params: { shortco
 
     // Xác định target URL và kiểm tra mật khẩu
     let targetUrl = shortlink.targetUrl
+    let requiresPassword = false
+    let schedulePassword = null
 
     if (shortlink.timeSchedules.length > 0) {
       const activeSchedule = shortlink.timeSchedules[0]
