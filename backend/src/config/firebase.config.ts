@@ -15,6 +15,8 @@ interface FirebaseServiceAccount {
 }
 
 const createServiceAccountFromEnv = (): FirebaseServiceAccount | null => {
+  console.log('🔍 Checking Firebase environment variables...');
+
   // Validate required environment variables
   const requiredVars = [
     'FIREBASE_TYPE',
@@ -25,6 +27,18 @@ const createServiceAccountFromEnv = (): FirebaseServiceAccount | null => {
     'FIREBASE_CLIENT_ID',
     'FIREBASE_CLIENT_X509_CERT_URL',
   ];
+
+  // Log each variable status
+  requiredVars.forEach((varName) => {
+    const value = process.env[varName];
+    if (value) {
+      console.log(
+        `✅ ${varName}: ${varName.includes('KEY') ? '[HIDDEN]' : value}`,
+      );
+    } else {
+      console.log(`❌ ${varName}: MISSING`);
+    }
+  });
 
   const missingVars = requiredVars.filter((varName) => !process.env[varName]);
 
@@ -37,16 +51,20 @@ const createServiceAccountFromEnv = (): FirebaseServiceAccount | null => {
 
   // Handle private key format
   let privateKey = process.env.FIREBASE_PRIVATE_KEY!;
+  console.log('🔧 Processing Firebase private key...');
 
   // Replace escaped newlines with actual newlines
   privateKey = privateKey.replace(/\\n/g, '\n');
 
   // Validate PEM format
   if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
+    console.error('❌ FIREBASE_PRIVATE_KEY must be in PEM format');
     throw new Error('FIREBASE_PRIVATE_KEY must be in PEM format');
   }
 
-  return {
+  console.log('✅ Firebase private key format is valid');
+
+  const serviceAccount = {
     type: process.env.FIREBASE_TYPE!,
     project_id: process.env.FIREBASE_PROJECT_ID!,
     private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID!,
@@ -60,11 +78,15 @@ const createServiceAccountFromEnv = (): FirebaseServiceAccount | null => {
     client_x509_cert_url: process.env.FIREBASE_CLIENT_X509_CERT_URL!,
     universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN,
   };
+
+  console.log('✅ Firebase service account configuration created successfully');
+  return serviceAccount;
 };
 
 export const initializeFirebase = () => {
   if (!admin.apps.length) {
     try {
+      console.log('🚀 Initializing Firebase...');
       const serviceAccount = createServiceAccountFromEnv();
 
       if (!serviceAccount) {
