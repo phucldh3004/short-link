@@ -21,7 +21,7 @@ COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
 # Sao chép file build ra
-# COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 
 # Firebase config (nếu cần thiết thực sự)
 # Nếu không có file firebase.json, Railway sẽ fail ở bước này
